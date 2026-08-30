@@ -265,3 +265,77 @@ class DeidGateway:
             raw_input=clinical_note,
             leak_check_passed=leak_check_passed,
         )
+
+    def summarize(
+        self,
+        clinical_note: str,
+        system_prompt: Optional[str] = "You are an expert clinical summarization assistant.",
+        adapter: Optional[BaseLLMAdapter] = None,
+        **kwargs: Any,
+    ) -> GatewayResult:
+        """
+        Convenience method for clinical summarization through the secure gateway.
+        """
+        return self.process(
+            clinical_note=clinical_note,
+            task_prompt="Please generate a concise clinical summary for this patient note:\n\n{text}",
+            adapter=adapter,
+            system_prompt=system_prompt,
+            **kwargs,
+        )
+
+    async def asummarize(
+        self,
+        clinical_note: str,
+        system_prompt: Optional[str] = "You are an expert clinical summarization assistant.",
+        adapter: Optional[BaseLLMAdapter] = None,
+        **kwargs: Any,
+    ) -> GatewayResult:
+        """
+        Asynchronous convenience method for clinical summarization through the secure gateway.
+        """
+        return await self.aprocess(
+            clinical_note=clinical_note,
+            task_prompt="Please generate a concise clinical summary for this patient note:\n\n{text}",
+            adapter=adapter,
+            system_prompt=system_prompt,
+            **kwargs,
+        )
+
+    def qa(
+        self,
+        clinical_note: str,
+        question: str,
+        system_prompt: Optional[str] = "You are an expert clinical QA assistant.",
+        adapter: Optional[BaseLLMAdapter] = None,
+        **kwargs: Any,
+    ) -> GatewayResult:
+        """
+        Convenience method for clinical question answering through the secure gateway.
+        """
+        return self.process(
+            clinical_note=clinical_note,
+            task_prompt=f"Context:\n{{text}}\n\nQuestion: {question}\nAnswer:",
+            adapter=adapter,
+            system_prompt=system_prompt,
+            **kwargs,
+        )
+
+    async def aqa(
+        self,
+        clinical_note: str,
+        question: str,
+        system_prompt: Optional[str] = "You are an expert clinical QA assistant.",
+        adapter: Optional[BaseLLMAdapter] = None,
+        **kwargs: Any,
+    ) -> GatewayResult:
+        """
+        Asynchronous convenience method for clinical question answering through the secure gateway.
+        """
+        return await self.aprocess(
+            clinical_note=clinical_note,
+            task_prompt=f"Context:\n{{text}}\n\nQuestion: {question}\nAnswer:",
+            adapter=adapter,
+            system_prompt=system_prompt,
+            **kwargs,
+        )
