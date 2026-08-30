@@ -3,8 +3,15 @@ FastAPI REST Service for HIPAA Safe Harbor De-Identification & Rehydration Gatew
 """
 
 from typing import Any, Dict, Optional
+import os
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 from deid_gateway.adapters.anthropic_adapter import AnthropicAdapter
 from deid_gateway.adapters.base import BaseLLMAdapter

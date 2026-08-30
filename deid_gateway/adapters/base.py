@@ -5,7 +5,14 @@ local open-weights, and production cloud providers.
 """
 
 from abc import ABC, abstractmethod
+import os
 from typing import Any, Dict, Optional
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 
 class BaseLLMAdapter(ABC):
