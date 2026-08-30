@@ -12,6 +12,7 @@ import sys
 import time
 from typing import Dict, List, Optional
 
+from deid_gateway.adapters.base import BaseLLMAdapter
 from deid_gateway.adapters.mock_adapter import MockLLMAdapter
 from deid_gateway.core.config import DeidConfig
 from deid_gateway.core.models.model_card import get_parameter_count
@@ -89,13 +90,13 @@ def print_banner() -> None:
     print(f"{'='*80}{Colors.END}\n")
 
 
-def run_roundtrip_demo() -> bool:
+def run_roundtrip_demo(adapter: Optional[BaseLLMAdapter] = None) -> bool:
     """Executes full roundtrip on all sample clinical notes."""
     print_banner()
 
-    adapter = MockLLMAdapter(mode="summarize")
+    active_adapter = adapter or MockLLMAdapter(mode="summarize")
     config = DeidConfig(date_shift_days=-42, preserve_eponyms=True)
-    gateway = DeidGateway(adapter=adapter, deid_config=config)
+    gateway = DeidGateway(adapter=active_adapter, deid_config=config)
 
     total_notes = len(SAMPLE_CLINICAL_NOTES)
     all_passed = True

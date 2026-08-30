@@ -30,17 +30,22 @@ class CLIColors:
     END = "\033[0m"
 
 
-def build_adapter(provider: str, mode: str = "summarize", api_key: Optional[str] = None) -> BaseLLMAdapter:
+def build_adapter(
+    provider: str,
+    mode: str = "summarize",
+    api_key: Optional[str] = None,
+    model_name: Optional[str] = None,
+) -> BaseLLMAdapter:
     """Instantiate selected adapter with fallback."""
     provider_clean = (provider or "mock").lower()
     if provider_clean == "mock":
         return MockLLMAdapter(mode=mode)
     elif provider_clean == "openai":
-        return OpenAIAdapter(api_key=api_key)
+        return OpenAIAdapter(api_key=api_key, model_name=model_name or "gpt-4o")
     elif provider_clean == "anthropic":
-        return AnthropicAdapter(api_key=api_key)
+        return AnthropicAdapter(api_key=api_key, model_name=model_name or "claude-3-5-sonnet-20240620")
     elif provider_clean in ("gemini", "google"):
-        return GeminiAdapter(api_key=api_key)
+        return GeminiAdapter(api_key=api_key, model_name=model_name or "gemini-3.6-flash")
     else:
         print(f"{CLIColors.YELLOW}Warning: Unknown provider '{provider}', defaulting to Mock adapter.{CLIColors.END}")
         return MockLLMAdapter(mode=mode)
@@ -133,10 +138,11 @@ def run_cli(args: Optional[list] = None) -> None:
     parser.add_argument("--note", "-n", type=str, help="Direct clinical note text string")
     parser.add_argument("--file", "-f", type=str, help="Path to clinical note text file")
     parser.add_argument(
-        "--adapter", "-a", type=str, default="mock",
+        "--adapter", "--provider", "-a", type=str, default="mock",
         choices=["mock", "openai", "anthropic", "gemini"],
         help="Foundation LLM adapter provider (default: mock)"
     )
+    parser.add_argument("--model", type=str, help="Specific model name (e.g. gemini-3.6-flash, gpt-4o)")
     parser.add_argument("--mode", "-m", type=str, default="summarize", help="Mock task mode: summarize, qa, extract")
     parser.add_argument("--prompt", "-p", type=str, default="Please summarize this clinical note:\n\n{text}", help="Task prompt template")
     parser.add_argument("--interactive", "-i", action="store_true", help="Launch interactive terminal REPL")
@@ -145,7 +151,7 @@ def run_cli(args: Optional[list] = None) -> None:
 
     parsed = parser.parse_args(args)
 
-    adapter = build_adapter(parsed.adapter, mode=parsed.mode, api_key=parsed.api_key)
+    adapter = build_adapter(parsed.adapter, mode=parsed.mode, api_key=parsed.api_key, model_name=parsed.model)
     gateway = DeidGateway(adapter=adapter)
 
     if parsed.interactive:
@@ -160,9 +166,9 @@ def run_cli(args: Optional[list] = None) -> None:
     elif parsed.note:
         process_and_display_note(parsed.note, gateway, task_prompt=parsed.prompt, as_json=parsed.json)
     else:
-        # If no arguments provided, execute default roundtrip demo
+        # If no arguments provided, execute default roundtrip demo with selected adapter
         from deid_gateway.demo.demo_roundtrip import run_roundtrip_demo
-        run_roundtrip_demo()
+        run_roundtrip_demo(adapter=adapter)
 
 
 def main() -> None:

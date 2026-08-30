@@ -62,7 +62,7 @@ class GeminiAdapter(BaseLLMAdapter):
         system_prompt: Optional[str] = None,
         **kwargs: Any,
     ) -> str:
-        """Synchronously invoke Google Gemini API."""
+        """Synchronously invoke Google Gemini API with automatic high-demand fallback."""
         if self.client is None:
             raise RuntimeError(
                 "Gemini client is not initialized. Please provide a client or install 'google-genai' package."
@@ -71,17 +71,30 @@ class GeminiAdapter(BaseLLMAdapter):
         model = kwargs.get("model", self.model_name)
         contents = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
 
-        if hasattr(self.client, "models") and hasattr(self.client.models, "generate_content"):
-            response = self.client.models.generate_content(
-                model=model,
-                contents=contents,
-            )
-            return response.text if hasattr(response, "text") else str(response)
-        elif hasattr(self.client, "generate_content"):
-            response = self.client.generate_content(contents)
-            return response.text if hasattr(response, "text") else str(response)
-        else:
-            raise RuntimeError("Unsupported Gemini client interface.")
+        candidate_models = [model, "gemini-3.6-flash", "gemini-2.5-flash-lite", "gemini-flash-latest", "gemma-4-26b-a4b-it"]
+        seen = set()
+        unique_candidates = [m for m in candidate_models if m and not (m in seen or seen.add(m))]
+
+        last_err = None
+        for cand_model in unique_candidates:
+            try:
+                if hasattr(self.client, "models") and hasattr(self.client.models, "generate_content"):
+                    response = self.client.models.generate_content(
+                        model=cand_model,
+                        contents=contents,
+                    )
+                    return response.text if hasattr(response, "text") else str(response)
+                elif hasattr(self.client, "generate_content"):
+                    response = self.client.generate_content(contents)
+                    return response.text if hasattr(response, "text") else str(response)
+            except Exception as e:
+                last_err = e
+                # If 503 high demand or 404, try next candidate model
+                continue
+
+        if last_err:
+            raise last_err
+        raise RuntimeError("Unsupported Gemini client interface.")
 
     async def agenerate(
         self,
