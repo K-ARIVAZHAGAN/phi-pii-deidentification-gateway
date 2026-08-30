@@ -232,11 +232,11 @@ class HybridTokenClassifier:
             re.IGNORECASE
         )
         self.RE_AGE_90_PLUS = re.compile(
-            r'\b(?:(?:age|aged)\s*[:\s]+)?((?:9[0-9]|1[0-2][0-9])\s*(?:-|–|\s)?(?:yo|y/o|y\.o\.|yo/f|yo/m|yr\s+old|yrs\s+old|years?\s+old|-year-old|-yr-old)|'
-            r'(?:9[0-9]|1[0-2][0-9])\b|'
+            r'\b(?:(?:age|aged)\s*[:\s]+)?((?:9[0-9]|1[0-2][0-9])\s*(?:-|–|\s)?(?:yo|y/o|y\.o\.|yo/f|yo/m|yr\s+old|yrs\s+old|years?\s+old|-year-old|-yr-old|years?\s+of\s+age)|'
             r'(?:nonagenarian|centenarian)|'
             r'(?:9[0-9]|1[0-2][0-9])(?:th|st|nd|rd)\s+birthday|'
-            r'turned\s+(?:9[0-9]|1[0-2][0-9]))',
+            r'turned\s+(?:9[0-9]|1[0-2][0-9])|'
+            r'(?:age|aged)\s*[:\s]+\s*(?:9[0-9]|1[0-2][0-9])\b)',
             re.IGNORECASE
         )
 
@@ -385,10 +385,105 @@ class HybridTokenClassifier:
             val = m.group(0)
             if not (1900 <= int(val[:4]) <= 2099 and len(val) == 4):
                 spans.append(EntitySpan(m.start(), m.end(), "ZIP", val, 0.95, "regex"))
+        # Layer 1.5: Identify Patient & Provider Names from Headers for Disambiguation
+        PATIENT_STOP_WORDS = {
+            "has", "is", "was", "presents", "presented", "reported", "denies", "underwent",
+            "admitted", "arrived", "complaining", "undergoing", "tolerated", "experienced",
+            "noted", "stated", "showed", "developed", "diagnosed", "evaluated", "a", "an", "the"
+        }
+        patient_names: set = set()
+        provider_names: set = set()
+
+        for m in self.RE_PATIENT_PREFIX.finditer(text):
+            val_start = m.start(1)
+            val_end = m.end(1)
+            val_text = text[val_start:val_end].strip()
+            if val_text and len(val_text) > 1:
+                spans.append(EntitySpan(val_start, val_start + len(val_text), "PATIENT", val_text, 0.99, "heuristics"))
+                for part in val_text.split():
+                    clean_part = re.sub(r'[^A-Za-z-]', '', part)
+                    if len(clean_part) > 2 and clean_part[0].isupper():
+                        patient_names.add(clean_part.lower())
+
+        for m in self.RE_PATIENT_HONORIFIC.finditer(text):
+            val_start = m.start(1)
+            val_end = m.end(1)
+            val_text = text[val_start:val_end].strip()
+            words = val_text.split()
+            clean_words = [w for w in words if w.lower() not in PATIENT_STOP_WORDS]
+            if clean_words:
+                clean_name = " ".join(clean_words)
+                spans.append(EntitySpan(val_start, val_start + len(clean_name), "PATIENT", clean_name, 0.98, "heuristics"))
+                for part in clean_words:
+                    clean_part = re.sub(r'[^A-Za-z-]', '', part)
+                    if len(clean_part) > 2 and clean_part[0].isupper():
+                        patient_names.add(clean_part.lower())
+
+        for m in self.RE_PROVIDER_PREFIX.finditer(text):
+            val_start = m.start(1)
+            val_end = m.end(1)
+            val_text = text[val_start:val_end].strip()
+            if val_text and len(val_text) > 1:
+                spans.append(EntitySpan(val_start, val_start + len(val_text), "PROVIDER", val_text, 0.99, "heuristics"))
+                for part in val_text.split():
+                    clean_part = re.sub(r'[^A-Za-z-]', '', part)
+                    if len(clean_part) > 2 and clean_part[0].isupper():
+                        provider_names.add(clean_part.lower())
+
+        # Propagate known patient names across document
+        for pname in patient_names:
+            if len(pname) >= 3 and pname not in {"the", "and", "male", "female", "year", "years", "old"}:
+                for pm in re.finditer(rf'\b{re.escape(pname)}\b', text, flags=re.IGNORECASE):
+                    m_start, m_end = pm.start(), pm.end()
+                    orig_case = text[m_start:m_end]
+                    if orig_case and orig_case[0].isupper():
+                        spans.append(EntitySpan(m_start, m_end, "PATIENT", orig_case, 0.98, "patient_propagation"))
+
+        for m in self.RE_PROVIDER_TITLED.finditer(text):
+            spans.append(EntitySpan(m.start(), m.end(), "PROVIDER", m.group(0), 0.97, "heuristics"))
+
+        for m in self.RE_PATIENT_NARRATIVE.finditer(text):
+            val_start = m.start(1)
+            val_end = m.end(1)
+            val_text = text[val_start:val_end].strip()
+            first_w = val_text.split()[0].lower() if val_text else ""
+            if val_text and len(val_text) > 1 and first_w not in PATIENT_STOP_WORDS:
+                spans.append(EntitySpan(val_start, val_start + len(val_text), "PATIENT", val_text, 0.97, "heuristics"))
+
+        for m in self.RE_FAMILY_PREFIX.finditer(text):
+            val_start = m.start(1)
+            val_end = m.end(1)
+            val_text = text[val_start:val_end].strip()
+            if val_text and len(val_text) > 1:
+                spans.append(EntitySpan(val_start, val_start + len(val_text), "FAMILY", val_text, 0.98, "heuristics"))
+
+        for m in self.RE_FAMILY_NARRATIVE.finditer(text):
+            val_start = m.start(1)
+            val_end = m.end(1)
+            val_text = text[val_start:val_end].strip()
+            if val_text and len(val_text) > 1:
+                spans.append(EntitySpan(val_start, val_start + len(val_text), "FAMILY", val_text, 0.96, "heuristics"))
+
+        # Geographic: Street, City, County, ZIP, GPS, Facilities
+        for m in self.RE_STREET_ADDRESS.finditer(text):
+            spans.append(EntitySpan(m.start(), m.end(), "ADDRESS", m.group(0), 0.97, "regex"))
+        for m in self.RE_ZIP.finditer(text):
+            val = m.group(0)
+            if not (1900 <= int(val[:4]) <= 2099 and len(val) == 4):
+                spans.append(EntitySpan(m.start(), m.end(), "ZIP", val, 0.95, "regex"))
         for m in self.RE_GPS.finditer(text):
             spans.append(EntitySpan(m.start(), m.end(), "ADDRESS", m.group(0), 0.99, "regex"))
         for m in self.RE_CITY_KNOWN.finditer(text):
-            spans.append(EntitySpan(m.start(), m.end(), "CITY", m.group(0), 0.95, "gazetteer"))
+            city_text = m.group(0).strip()
+            city_lower = city_text.lower()
+            # Discard city match if it refers to the patient or doctor in this note
+            if city_lower in patient_names or city_lower in provider_names:
+                continue
+            pre_start = max(0, m.start() - 10)
+            preceding_str = text[pre_start:m.start()].lower()
+            if re.search(r'\b(?:mr\.?|mrs\.?|ms\.?|dr\.?|doctor|patient|pt\.?)\s*$', preceding_str):
+                continue
+            spans.append(EntitySpan(m.start(), m.end(), "CITY", city_text, 0.95, "gazetteer"))
         for m in self.RE_COUNTY_KNOWN.finditer(text):
             spans.append(EntitySpan(m.start(), m.end(), "COUNTY", m.group(0), 0.97, "gazetteer"))
         for m in self.RE_CITY_STATE_ZIP.finditer(text):
@@ -416,63 +511,17 @@ class HybridTokenClassifier:
             val_start = m.start(1) if m.group(1) else m.start()
             val_end = m.end(1) if m.group(1) else m.end()
             val_text = text[val_start:val_end].strip()
-            if val_text:
-                spans.append(EntitySpan(val_start, val_start + len(val_text), "AGE", val_text, 0.99, "regex", custom_token="[AGE_90+]"))
-
-        # Layer 2: Providers, Patients, Family Named Entities
-        for m in self.RE_PROVIDER_TITLED.finditer(text):
-            spans.append(EntitySpan(m.start(), m.end(), "PROVIDER", m.group(0), 0.97, "heuristics"))
-
-        for m in self.RE_PROVIDER_PREFIX.finditer(text):
-            val_start = m.start(1)
-            val_end = m.end(1)
-            val_text = text[val_start:val_end].strip()
-            if val_text and len(val_text) > 1:
-                spans.append(EntitySpan(val_start, val_start + len(val_text), "PROVIDER", val_text, 0.98, "heuristics"))
-
-        for m in self.RE_PATIENT_PREFIX.finditer(text):
-            val_start = m.start(1)
-            val_end = m.end(1)
-            val_text = text[val_start:val_end].strip()
-            if val_text and len(val_text) > 1:
-                spans.append(EntitySpan(val_start, val_start + len(val_text), "PATIENT", val_text, 0.98, "heuristics"))
-
-        PATIENT_STOP_WORDS = {
-            "has", "is", "was", "presents", "presented", "reported", "denies", "underwent",
-            "admitted", "arrived", "complaining", "undergoing", "tolerated", "experienced",
-            "noted", "stated", "showed", "developed", "diagnosed", "evaluated", "a", "an", "the"
-        }
-        for m in self.RE_PATIENT_NARRATIVE.finditer(text):
-            val_start = m.start(1)
-            val_end = m.end(1)
-            val_text = text[val_start:val_end].strip()
-            first_w = val_text.split()[0].lower() if val_text else ""
-            if val_text and len(val_text) > 1 and first_w not in PATIENT_STOP_WORDS:
-                spans.append(EntitySpan(val_start, val_start + len(val_text), "PATIENT", val_text, 0.97, "heuristics"))
-
-        for m in self.RE_PATIENT_HONORIFIC.finditer(text):
-            val_start = m.start(1)
-            val_end = m.end(1)
-            val_text = text[val_start:val_end].strip()
-            words = val_text.split()
-            clean_words = [w for w in words if w.lower() not in PATIENT_STOP_WORDS]
-            if clean_words:
-                clean_name = " ".join(clean_words)
-                spans.append(EntitySpan(val_start, val_start + len(clean_name), "PATIENT", clean_name, 0.97, "heuristics"))
-
-        for m in self.RE_FAMILY_PREFIX.finditer(text):
-            val_start = m.start(1)
-            val_end = m.end(1)
-            val_text = text[val_start:val_end].strip()
-            if val_text and len(val_text) > 1:
-                spans.append(EntitySpan(val_start, val_start + len(val_text), "FAMILY", val_text, 0.98, "heuristics"))
-
-        for m in self.RE_FAMILY_NARRATIVE.finditer(text):
-            val_start = m.start(1)
-            val_end = m.end(1)
-            val_text = text[val_start:val_end].strip()
-            if val_text and len(val_text) > 1:
-                spans.append(EntitySpan(val_start, val_start + len(val_text), "FAMILY", val_text, 0.96, "heuristics"))
+            if not val_text:
+                continue
+            # Filter out medication dosages and lab units:
+            # Check if preceded by / (e.g. 25/100 mg) or followed by dosage/lab unit
+            pre_char = text[val_start - 1] if val_start > 0 else ""
+            post_context = text[val_end:val_end + 15].strip().lower()
+            if pre_char == "/":
+                continue
+            if re.match(r'^(?:mg|mcg|ml|g|kg|units?|tabs?|capsules?|bpm|mmhg|%|k/ul|mg/dl|g/dl|meq)\b', post_context):
+                continue
+            spans.append(EntitySpan(val_start, val_start + len(val_text), "AGE", val_text, 0.99, "regex", custom_token="[AGE_90+]"))
 
         # Layer 2.5: Neural Sequence Labeling (PyTorch Transformer NER)
         if hasattr(self, "transformer_ner") and self.transformer_ner.is_loaded:

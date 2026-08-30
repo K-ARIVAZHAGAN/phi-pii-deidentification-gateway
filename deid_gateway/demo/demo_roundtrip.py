@@ -85,8 +85,8 @@ SAMPLE_CLINICAL_NOTES = [
 def print_banner() -> None:
     param_count = get_parameter_count()
     print(f"\n{Colors.BOLD}{Colors.CYAN}{'='*80}")
-    print(f"  HIPAA SAFE HARBOR PHI/PII DE-IDENTIFICATION & REHYDRATION GATEWAY")
-    print(f"  Under-1B Parameter Model Family ({param_count:,} params) | Zero-Leak Guarantee")
+    print(f"  PHI/PII DE-IDENTIFICATION & REHYDRATION GATEWAY")
+    print(f"  Sub-1B Parameter Model Family ({param_count:,} params) | Multi-Specialty Pipeline")
     print(f"{'='*80}{Colors.END}\n")
 
 

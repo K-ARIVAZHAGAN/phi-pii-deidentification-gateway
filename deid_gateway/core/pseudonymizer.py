@@ -150,8 +150,43 @@ class Pseudonymizer:
                 "custom_token": custom_token,
             })
 
-        # Filter overlapping spans (keep longest span or higher confidence)
-        extracted.sort(key=lambda x: (x["start"], -(x["end"] - x["start"])))
+        # Priority for overlapping spans: Clinical and demographic entities override generic gazetteers
+        CATEGORY_PRIORITY = {
+            "PATIENT": 100,
+            "PROVIDER": 95,
+            "FAMILY": 90,
+            "SSN": 85,
+            "MRN": 85,
+            "NPI": 85,
+            "LICENSE": 85,
+            "DATE": 80,
+            "AGE": 75,
+            "PHONE": 70,
+            "FAX": 70,
+            "EMAIL": 70,
+            "HOSPITAL": 60,
+            "ADDRESS": 50,
+            "CITY": 40,
+            "COUNTY": 30,
+            "ZIP": 20,
+            "DEVICE": 40,
+            "VEHICLE": 40,
+            "BIOMETRIC": 40,
+            "PHOTO": 40,
+            "ACCESSION": 40,
+            "URL": 40,
+            "IP": 40,
+            "ACCOUNT": 40,
+            "HEALTHPLAN": 40,
+        }
+
+        # Filter overlapping spans
+        extracted.sort(key=lambda x: (
+            x["start"],
+            -(x["end"] - x["start"]),
+            -CATEGORY_PRIORITY.get(x["category"].upper(), 50),
+            -x["confidence"]
+        ))
         non_overlapping = []
         last_end = -1
         for item in extracted:
@@ -159,25 +194,27 @@ class Pseudonymizer:
                 non_overlapping.append(item)
                 last_end = item["end"]
             else:
-                # Overlap: keep the longer span if it extends further
-                if non_overlapping and item["end"] > non_overlapping[-1]["end"]:
-                    prev = non_overlapping.pop()
-                    if (item["end"] - item["start"]) > (prev["end"] - prev["start"]):
-                        non_overlapping.append(item)
-                        last_end = item["end"]
-                    else:
-                        non_overlapping.append(prev)
+                if non_overlapping:
+                    prev = non_overlapping[-1]
+                    # Exact same span range: prefer higher semantic category priority
+                    if item["start"] == prev["start"] and item["end"] == prev["end"]:
+                        prev_prio = CATEGORY_PRIORITY.get(prev["category"].upper(), 50)
+                        curr_prio = CATEGORY_PRIORITY.get(item["category"].upper(), 50)
+                        if curr_prio > prev_prio or (curr_prio == prev_prio and item["confidence"] > prev["confidence"]):
+                            non_overlapping.pop()
+                            non_overlapping.append(item)
+                    # If new span is longer and extends further, keep longer span
+                    elif item["end"] > prev["end"]:
+                        if (item["end"] - item["start"]) > (prev["end"] - prev["start"]):
+                            non_overlapping.pop()
+                            non_overlapping.append(item)
+                            last_end = item["end"]
 
-        # Sort in reverse order of start index for in-place text replacement
-        non_overlapping.sort(key=lambda x: x["start"], reverse=True)
-
-        masked_text = text
+        # Step 1: Allocate tokens in natural document order (start ascending, top-to-bottom)
+        non_overlapping.sort(key=lambda x: x["start"])
         for item in non_overlapping:
-            start = item["start"]
-            end = item["end"]
             cat = item["category"]
             orig_text = item["text"]
-            conf = item["confidence"]
             shifted = item.get("shifted_text")
             custom_token = item.get("custom_token")
 
@@ -185,7 +222,6 @@ class Pseudonymizer:
                 token = self.get_or_create_token(cat, orig_text, custom_token=custom_token)
                 replacement = token
             elif shifted:
-                # In surrogate mode, date can be [DATE_N], and date mapping recorded
                 token = self.get_or_create_token("DATE", orig_text)
                 replacement = token
                 self.date_mappings.append({
@@ -197,6 +233,20 @@ class Pseudonymizer:
             else:
                 token = self.get_or_create_token(cat, orig_text)
                 replacement = token
+
+            item["allocated_token"] = replacement
+            item["record_token"] = token
+
+        # Step 2: In-place text replacement in reverse order (bottom-to-top) to preserve offsets
+        non_overlapping.sort(key=lambda x: x["start"], reverse=True)
+        masked_text = text
+        for item in non_overlapping:
+            start = item["start"]
+            end = item["end"]
+            replacement = item["allocated_token"]
+            cat = item["category"]
+            orig_text = item["text"]
+            conf = item["confidence"]
 
             self.record_entity(
                 category=cat,
@@ -210,4 +260,5 @@ class Pseudonymizer:
             # Substitute slice
             masked_text = masked_text[:start] + replacement + masked_text[end:]
 
-        return masked_text, self.build_mapping()
+        mapping = self.build_mapping()
+        return masked_text, mapping

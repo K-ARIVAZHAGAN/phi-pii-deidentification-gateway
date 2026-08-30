@@ -57,15 +57,21 @@ def rehydrate(
         if token in working_text:
             working_text = working_text.replace(token, original_val)
 
-    # Step 4: Check for shifted date synthetic replacements if any
-    for d_map in date_mappings:
-        shifted_str = d_map.get("shifted_str")
-        orig_str = d_map.get("original_str")
-        if shifted_str and orig_str and shifted_str in working_text:
-            # Only replace exact whole-word date matches
-            working_text = re.sub(rf'\b{re.escape(shifted_str)}\b', orig_str, working_text)
+    # Step 4: Invert shifted dates only when operating in direct date-shift mode (no surrogate tokens)
+    if not token_to_original and date_mappings:
+        for d_map in date_mappings:
+            shifted_str = d_map.get("shifted_str")
+            orig_str = d_map.get("original_str")
+            if shifted_str and orig_str and shifted_str in working_text:
+                # Only replace exact whole-word date matches
+                working_text = re.sub(rf'\b{re.escape(shifted_str)}\b', orig_str, working_text)
 
     # Step 5: Restore non-PHI literal brackets
     working_text = CollisionGuard.unescape_literal_brackets(working_text, bracket_map)
+
+    # Step 6: Clean up redundant age suffix duplication from generative completions
+    # e.g. "94-year-old years old" -> "94-year-old", "90th birthday birthday" -> "90th birthday"
+    working_text = re.sub(r'\b(\d+-(?:year-old|yr-old)|nonagenarian|centenarian)\s+(?:years?\s+old|yo|y/o|yr\s+old|yrs\s+old)\b', r'\1', working_text, flags=re.IGNORECASE)
+    working_text = re.sub(r'\b(\d+(?:th|st|nd|rd)\s+birthday)\s+birthday\b', r'\1', working_text, flags=re.IGNORECASE)
 
     return working_text
