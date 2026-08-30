@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "deid-gateway"
+version = "1.0.0"
+description = "Production-grade HIPAA Safe Harbor PHI/PII De-Identification & Rehydration Gateway"
+readme = "README.md"
+authors = [{ name = "AI/ML Engineering Team" }]
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+keywords = ["hipaa", "phi", "pii", "deidentification", "nlp", "llm-gateway", "healthcare"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Healthcare Industry",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Security :: Cryptography",
+]
+dependencies = [
+    "torch>=2.0.0",
+    "transformers>=4.40.0",
+    "safetensors>=0.4.0",
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.28.0",
+    "pydantic>=2.6.0",
+    "httpx>=0.27.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "faker>=24.0.0",
+]
+llm = [
+    "openai>=1.14.0",
+    "anthropic>=0.20.0",
+    "google-generativeai>=0.4.0",
+]
+
+[project.scripts]
+deid-gateway = "deid_gateway.api.server:main"
+deid-demo = "deid_gateway.demo.demo_cli:main"
+deid-benchmarks = "deid_gateway.benchmarks.run_benchmarks:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
