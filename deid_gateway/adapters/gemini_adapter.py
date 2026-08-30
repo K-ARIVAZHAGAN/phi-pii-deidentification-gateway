@@ -18,7 +18,7 @@ class GeminiAdapter(BaseLLMAdapter):
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model_name: str = "gemini-1.5-flash",
+        model_name: str = "gemini-3.6-flash",
         temperature: float = 0.0,
         max_tokens: int = 1024,
         client: Optional[Any] = None,

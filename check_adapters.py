@@ -162,7 +162,7 @@ def test_gemini_adapter():
     if api_key:
         print(f"  * Mode: {CYAN}LIVE CLOUD API CALL (generativelanguage.googleapis.com){RESET}")
         try:
-            adapter = GeminiAdapter(api_key=api_key, model_name="gemini-1.5-flash")
+            adapter = GeminiAdapter(api_key=api_key, model_name="gemini-3.6-flash")
             gateway = DeidGateway(adapter=adapter)
             res = gateway.summarize(note)
             print(f"  * Status           : {GREEN}[PASS] Live Gemini API Call Succeeded!{RESET}")
