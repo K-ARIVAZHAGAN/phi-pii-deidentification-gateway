@@ -232,11 +232,11 @@ class HybridTokenClassifier:
             re.IGNORECASE
         )
         self.RE_AGE_90_PLUS = re.compile(
-            r'\b(?:(?:age\s*[:\s]*)?(?:9[0-9]|1[0-2][0-9])\s*(?:-|–|\s)?(?:yo|y/o|y\.o\.|yo/f|yo/m|yr\s+old|yrs\s+old|years?\s+old|-year-old|-yr-old)|'
-            r'(?:age|aged)\s+(?:9[0-9]|1[0-2][0-9])\b|'
-            r'\b(?:nonagenarian|centenarian)\b|'
-            r'\b(?:9[0-9]|1[0-2][0-9])(?:th|st|nd|rd)\s+birthday\b|'
-            r'\bturned\s+(?:9[0-9]|1[0-2][0-9])\b)',
+            r'\b(?:(?:age|aged)\s*[:\s]+)?((?:9[0-9]|1[0-2][0-9])\s*(?:-|–|\s)?(?:yo|y/o|y\.o\.|yo/f|yo/m|yr\s+old|yrs\s+old|years?\s+old|-year-old|-yr-old)|'
+            r'(?:9[0-9]|1[0-2][0-9])\b|'
+            r'(?:nonagenarian|centenarian)|'
+            r'(?:9[0-9]|1[0-2][0-9])(?:th|st|nd|rd)\s+birthday|'
+            r'turned\s+(?:9[0-9]|1[0-2][0-9]))',
             re.IGNORECASE
         )
 
@@ -257,7 +257,7 @@ class HybridTokenClassifier:
             r'\b(?:Patient|Pt\.?)\s+([A-Z\u00C0-\u024F][a-zA-Z0-9_\u00C0-\u024F\.\'-]+(?:\s+[A-Z\u00C0-\u024F][a-zA-Z0-9_\u00C0-\u024F\.\'-]+){0,3})(?=\s+[a-z]|\s*\(|\s*\||\s*\n|\s*;|\s*,|\s*\[|\s*\.|\s*$)'
         )
         self.RE_PATIENT_HONORIFIC = re.compile(
-            r'\b(?:Mr\.?|Mrs\.?|Ms\.?|Miss)\s+([A-Za-z0-9_\u00C0-\u024F\'-]+(?:\s+[A-Za-z0-9_\u00C0-\u024F\'-]+)?)\b'
+            r'\b(?:Mr\.?|Mrs\.?|Ms\.?|Miss)\s+([A-Z\u00C0-\u024F][a-zA-Z0-9_\u00C0-\u024F\'-]+(?:\s+[A-Za-z0-9_\u00C0-\u024F\'-]+)?)\b'
         )
         self.RE_FAMILY_PREFIX = re.compile(
             r'(?i)\b(?:Mother|Father|Brother|Sister|Son|Daughter|Child|Guardian|Legal\s+Guardians?|Stepfather|Stepmother|Stepson|Stepdaughter|Grandmother|Grandfather|Granddaughter|Grandson|Uncle|Aunt|Spouse|Husband|Wife|Cousin|Emergency\s+Contact)[:\s]+(?:(?:Mother|Father|Spouse|Husband|Wife|Sister|Brother|Son|Daughter|Guardian|Stepfather|Stepmother|Grandmother|Grandfather)\s+)?([A-Za-z0-9_\u00C0-\u024F\.\'\s-]+?)(?=\s+at\b|\s*\(|\s+and\b|\s*\||\s*\.|\s*,|\s*;|\s*\n|$)'
@@ -413,7 +413,11 @@ class HybridTokenClassifier:
         for m in self.RE_DATE_FORMATS.finditer(text):
             spans.append(EntitySpan(m.start(), m.end(), "DATE", m.group(0), 0.98, "regex"))
         for m in self.RE_AGE_90_PLUS.finditer(text):
-            spans.append(EntitySpan(m.start(), m.end(), "AGE", m.group(0), 0.99, "regex", custom_token="[AGE_90+]"))
+            val_start = m.start(1) if m.group(1) else m.start()
+            val_end = m.end(1) if m.group(1) else m.end()
+            val_text = text[val_start:val_end].strip()
+            if val_text:
+                spans.append(EntitySpan(val_start, val_start + len(val_text), "AGE", val_text, 0.99, "regex", custom_token="[AGE_90+]"))
 
         # Layer 2: Providers, Patients, Family Named Entities
         for m in self.RE_PROVIDER_TITLED.finditer(text):
@@ -436,7 +440,7 @@ class HybridTokenClassifier:
         PATIENT_STOP_WORDS = {
             "has", "is", "was", "presents", "presented", "reported", "denies", "underwent",
             "admitted", "arrived", "complaining", "undergoing", "tolerated", "experienced",
-            "noted", "stated", "showed", "developed", "diagnosed", "evaluated"
+            "noted", "stated", "showed", "developed", "diagnosed", "evaluated", "a", "an", "the"
         }
         for m in self.RE_PATIENT_NARRATIVE.finditer(text):
             val_start = m.start(1)
@@ -450,8 +454,11 @@ class HybridTokenClassifier:
             val_start = m.start(1)
             val_end = m.end(1)
             val_text = text[val_start:val_end].strip()
-            if val_text and len(val_text) > 1:
-                spans.append(EntitySpan(val_start, val_start + len(val_text), "PATIENT", val_text, 0.97, "heuristics"))
+            words = val_text.split()
+            clean_words = [w for w in words if w.lower() not in PATIENT_STOP_WORDS]
+            if clean_words:
+                clean_name = " ".join(clean_words)
+                spans.append(EntitySpan(val_start, val_start + len(clean_name), "PATIENT", clean_name, 0.97, "heuristics"))
 
         for m in self.RE_FAMILY_PREFIX.finditer(text):
             val_start = m.start(1)

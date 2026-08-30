@@ -27,7 +27,10 @@ class CollisionGuard:
 
     # Regex matching fuzzy or mutated surrogate tokens in LLM responses
     FUZZY_TOKEN_PATTERN = re.compile(
-        r'(?:\[|\()\s*([A-Za-z0-9_+-]+)[\s_]+([A-Za-z0-9_+-]+)\s*(?:\]|\))|'
+        r'(?:\[|\()\s*(PATIENT|PROVIDER|DOCTOR|PHYSICIAN|FAMILY|HOSPITAL|FACILITY|'
+        r'ADDRESS|STREET|CITY|COUNTY|STATE|ZIP|DATE|AGE|PHONE|FAX|EMAIL|SSN|MRN|'
+        r'HEALTHPLAN|ACCOUNT|LICENSE|NPI|VEHICLE|DEVICE|URL|IP|BIOMETRIC|PHOTO|ACCESSION|ID)'
+        r'[\s_]+([A-Za-z0-9_+-]+)\s*(?:\]|\))|'
         r'\[\s*([A-Za-z0-9_+-]+)\s*\]',
         re.IGNORECASE
     )
@@ -35,7 +38,7 @@ class CollisionGuard:
     # Standalone unbracketed surrogate token pattern (e.g. "PATIENT_1 was discharged")
     UNBRACKETED_TOKEN_PATTERN = re.compile(
         r'(?<!\[)\b(PATIENT_\d+|PROVIDER_[A-Za-z0-9]+|FAMILY_\d+|HOSPITAL_\d+|ADDRESS_\d+|'
-        r'CITY_\d+|COUNTY_\d+|ZIP_\d+|DATE_\d+|AGE_90\+|AGE_\d+|PHONE_\d+|FAX_\d+|'
+        r'CITY_\d+|COUNTY_\d+|ZIP_\d+|DATE_\d+|AGE_90\+_\d+|AGE_90\+|AGE_\d+|PHONE_\d+|FAX_\d+|'
         r'EMAIL_\d+|SSN_\d+|MRN_\d+|HEALTHPLAN_\d+|ACCOUNT_\d+|LICENSE_\d+|NPI_\d+|'
         r'VEHICLE_\d+|DEVICE_\d+|URL_\d+|IP_\d+|BIOMETRIC_\d+|PHOTO_\d+|ACCESSION_\d+|ID_\d+)\b(?!\])'
     )
@@ -97,11 +100,19 @@ class CollisionGuard:
         # Step 2: Normalize fuzzy spaced/cased brackets
         def _normalize_match(match: re.Match) -> str:
             if match.group(3):  # Single word inside brackets: [PATIENT_1] or [age_90+]
-                raw = match.group(3).strip().upper()
+                raw = match.group(3).strip()
+                raw_upper = raw.upper()
+                if re.fullmatch(r'AGE_90\+(?:_\d+)?', raw_upper):
+                    return f"[{raw_upper}]"
                 # Handle [AGE 90+] or [AGE90+]
-                if "AGE" in raw and "90" in raw:
+                if "AGE" in raw_upper and "90" in raw_upper:
                     return "[AGE_90+]"
-                return f"[{raw}]"
+                
+                # Check if it corresponds to a known PHI category prefix
+                prefix = raw_upper.split('_')[0] if '_' in raw_upper else raw_upper
+                if prefix in cls.KNOWN_CATEGORIES:
+                    return f"[{raw_upper}]"
+                return match.group(0)  # Preserve non-PHI brackets as-is
             
             cat = match.group(1).strip().upper()
             idx = match.group(2).strip().upper()
@@ -115,6 +126,8 @@ class CollisionGuard:
                 cat = "HOSPITAL"
                 
             if cat == "AGE" and "90" in idx:
+                if re.fullmatch(r'90\+(?:_\d+)?', idx):
+                    return f"[AGE_{idx}]"
                 return "[AGE_90+]"
                 
             return f"[{cat}_{idx}]"

@@ -35,6 +35,10 @@ class Pseudonymizer:
 
         if custom_token:
             token = custom_token
+            if token in self.token_to_original and self.token_to_original[token].lower() != original_text.strip().lower():
+                self.category_counters[category.upper()] = self.category_counters.get(category.upper(), 1) + 1
+                idx = self.category_counters[category.upper()]
+                token = f"[{category.upper()}_90+_{idx}]" if "90" in token else f"[{category.upper()}_{idx}]"
         else:
             cat_upper = category.upper()
             # Normalize category names to standard prefixes
@@ -50,7 +54,12 @@ class Pseudonymizer:
                 cat_upper = "PHONE"
 
             if cat_upper == "AGE" and ("90" in original_text or "+" in original_text):
-                token = "[AGE_90+]"
+                if "[AGE_90+]" not in self.token_to_original or self.token_to_original["[AGE_90+]"].lower() == original_text.strip().lower():
+                    token = "[AGE_90+]"
+                else:
+                    self.category_counters["AGE"] = self.category_counters.get("AGE", 1) + 1
+                    idx = self.category_counters["AGE"]
+                    token = f"[AGE_90+_{idx}]"
             else:
                 self.category_counters[cat_upper] = self.category_counters.get(cat_upper, 0) + 1
                 idx = self.category_counters[cat_upper]
@@ -173,8 +182,8 @@ class Pseudonymizer:
             custom_token = item.get("custom_token")
 
             if custom_token:
-                replacement = custom_token
-                token = self.get_or_create_token(cat, orig_text, custom_token=replacement)
+                token = self.get_or_create_token(cat, orig_text, custom_token=custom_token)
+                replacement = token
             elif shifted:
                 # In surrogate mode, date can be [DATE_N], and date mapping recorded
                 token = self.get_or_create_token("DATE", orig_text)
