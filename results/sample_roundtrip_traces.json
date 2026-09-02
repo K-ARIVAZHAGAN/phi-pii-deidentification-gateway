@@ -1,0 +1,54 @@
+{
+  "live_cloud_demonstrations": [
+    {
+      "case_id": "CASE-01-NEUROLOGY",
+      "specialty": "Neurology & Movement Disorders",
+      "provider": "gemini",
+      "model": "gemini-3.6-flash",
+      "raw_clinical_note": "PATIENT: Robert Henderson | DOB: 05/14/1958 | MRN: 884-9102-X | SSN: 078-45-9921\nDATE OF CONSULT: 10/14/2023\nATTENDING: Dr. James Parkinson, MD (NPI: 1982736450, Phone: 617-555-0144)\nFACILITY: St. Luke's Hospital, Boston, MA 02115\n\nREASON FOR CONSULT: Progressive resting tremor and cogwheel rigidity.\nHISTORY: Mr. Henderson is a 65-year-old male evaluated for Parkinson's disease. Prior appendectomy on 09/10/2023. Babinski reflex is negative bilaterally. Initiating carbidopa-levodopa 25/100 mg TID.\n\nPLAN: Follow-up clinic appointment on 11/25/2023 in 6 weeks.\nSigned: Dr. James Parkinson, MD",
+      "deidentified_masked_text": "PATIENT: [PATIENT_1] | DOB: [DATE_1] | MRN: [MRN_1] | SSN: [SSN_1]\nDATE OF CONSULT: [DATE_2]\nATTENDING: [PROVIDER_1] (NPI: [NPI_1], Phone: [PHONE_1])\nFACILITY: [HOSPITAL_1], MA [ZIP_1]\n\nREASON FOR CONSULT: Progressive resting tremor and cogwheel rigidity.\nHISTORY: Mr. [PATIENT_2] is a 65-year-old male evaluated for Parkinson's disease. Prior appendectomy on [DATE_3]. Babinski reflex is negative bilaterally. Initiating carbidopa-levodopa 25/100 mg TID.\n\nPLAN: Follow-up clinic appointment on [DATE_4] in 6 weeks.\nSigned: [PROVIDER_1]",
+      "session_mapping": {
+        "token_to_original": {
+          "[PATIENT_1]": "Robert Henderson",
+          "[DATE_1]": "05/14/1958",
+          "[MRN_1]": "884-9102-X",
+          "[SSN_1]": "078-45-9921",
+          "[DATE_2]": "10/14/2023",
+          "[PROVIDER_1]": "Dr. James Parkinson, MD",
+          "[NPI_1]": "1982736450",
+          "[PHONE_1]": "617-555-0144",
+          "[HOSPITAL_1]": "St. Luke's Hospital, Boston",
+          "[ZIP_1]": "02115",
+          "[PATIENT_2]": "Henderson",
+          "[DATE_3]": "09/10/2023",
+          "[DATE_4]": "11/25/2023"
+        }
+      },
+      "zero_phi_leaked_to_llm": true,
+      "rehydrated_final_text": "### Clinical Assessment & Plan\n* **Patient:** Robert Henderson (DOB: 05/14/1958, MRN: 884-9102-X)\n* **Attending Neurologist:** Dr. James Parkinson, MD (St. Luke's Hospital, Boston, MA 02115)\n* **Consult Date:** 10/14/2023\n* **Diagnosis:** Parkinson's disease (Initial evaluation for resting tremor and rigidity)\n* **Medication:** Initiating carbidopa-levodopa 25/100 mg TID\n* **Follow-up:** Scheduled for 11/25/2023 in 6 weeks."
+    },
+    {
+      "case_id": "CASE-02-SURGICAL-ONCOLOGY",
+      "specialty": "Surgical Oncology & Medical Eponyms",
+      "provider": "gemini",
+      "model": "gemini-3.6-flash",
+      "raw_clinical_note": "OPERATIVE NOTE & DISCHARGE PLAN\nPATIENT: Eleanor Vance | DOB: 10/14/1982 | MRN: 48201-ONC\nDATE OF SURGERY: 03/15/2024\nSURGEON: Dr. Alan Whipple, MD (NPI: 1092837465)\nASSISTANT: Dr. Katherine Vance, MD\nFACILITY: Massachusetts General Hospital, Boston, MA 02114\n\nPREOPERATIVE DIAGNOSIS: Whipple disease and pancreatic head adenocarcinoma.\nPROCEDURE PERFORMED: Classic pancreaticoduodenectomy (Whipple procedure).\nFINDINGS: Successful resection. Blood loss 250 mL. Patient tolerated procedure well.\n\nPOST-OP PLAN: Prescribed Ceftriaxone IV for 2 weeks followed by oral TMP-SMX for 1 year. Follow-up in surgical clinic in 3 weeks.\nDictated by: Dr. Alan Whipple, MD",
+      "deidentified_masked_text": "OPERATIVE NOTE & DISCHARGE PLAN\nPATIENT: [PATIENT_1] | DOB: [DATE_1] | MRN: [MRN_1]\nDATE OF SURGERY: [DATE_2]\nSURGEON: [PROVIDER_1] (NPI: [NPI_1])\nASSISTANT: [PROVIDER_2]\nFACILITY: [HOSPITAL_1], MA [ZIP_1]\n\nPREOPERATIVE DIAGNOSIS: Whipple disease and pancreatic head adenocarcinoma.\nPROCEDURE PERFORMED: Classic pancreaticoduodenectomy (Whipple procedure).\nFINDINGS: Successful resection. Blood loss 250 mL. Patient tolerated procedure well.\n\nPOST-OP PLAN: Prescribed Ceftriaxone IV for 2 weeks followed by oral TMP-SMX for 1 year. Follow-up in surgical clinic in 3 weeks.\nDictated by: [PROVIDER_1]",
+      "session_mapping": {
+        "token_to_original": {
+          "[PATIENT_1]": "Eleanor Vance",
+          "[DATE_1]": "10/14/1982",
+          "[MRN_1]": "48201-ONC",
+          "[DATE_2]": "03/15/2024",
+          "[PROVIDER_1]": "Dr. Alan Whipple, MD",
+          "[NPI_1]": "1092837465",
+          "[PROVIDER_2]": "Dr. Katherine Vance, MD",
+          "[HOSPITAL_1]": "Massachusetts General Hospital, Boston",
+          "[ZIP_1]": "02114"
+        }
+      },
+      "zero_phi_leaked_to_llm": true,
+      "rehydrated_final_text": "### Operative Assessment & Discharge Summary\n* **Patient:** Eleanor Vance (DOB: 10/14/1982)\n* **Primary Surgeon:** Dr. Alan Whipple, MD at Massachusetts General Hospital, Boston, MA 02114\n* **Assistant:** Dr. Katherine Vance, MD\n* **Diagnosis:** Whipple disease and pancreatic adenocarcinoma\n* **Procedure:** Successful classic pancreaticoduodenectomy (Whipple procedure)\n* **Post-Op Medication:** Ceftriaxone IV x 2 weeks followed by TMP-SMX oral maintenance."
+    }
+  ]
+}

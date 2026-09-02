@@ -1,0 +1,818 @@
+{
+  "summary": {
+    "total_notes": 55,
+    "total_ground_truth_entities": 732,
+    "iterations": 1,
+    "sub_1b_verified": true
+  },
+  "regex": {
+    "name": "Baseline 1 (Regex-Only)",
+    "engine_type": "regex",
+    "precision": 0.7526690391459074,
+    "recall": 0.5778688524590164,
+    "f1": 0.6537867078825348,
+    "f2": 0.6060171919770775,
+    "true_positives": 423,
+    "false_positives": 139,
+    "false_negatives": 309,
+    "leak_rate": 100.0,
+    "utility_score": 1.0,
+    "p50_latency_ms": 0.8337000001574779,
+    "p90_latency_ms": 1.0509600000659702,
+    "p95_latency_ms": 1.1215799999945373,
+    "p99_latency_ms": 1.2523260000034497,
+    "mean_latency_ms": 0.8576090908966514,
+    "throughput_notes_per_sec": 1166.0324157180696,
+    "throughput_tokens_per_sec": 111705.90542579108,
+    "parameter_count": 0,
+    "parameter_count_str": "0 (Heuristic)",
+    "per_category": {
+      "AGE": {
+        "precision": 1.0,
+        "recall": 0.1429,
+        "f1": 0.25,
+        "f2": 0.1724,
+        "tp": 1,
+        "fp": 0,
+        "fn": 6
+      },
+      "BIOMETRIC": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 3
+      },
+      "DATE": {
+        "precision": 0.8864,
+        "recall": 0.9936,
+        "f1": 0.9369,
+        "f2": 0.9701,
+        "tp": 156,
+        "fp": 20,
+        "fn": 1
+      },
+      "DEVICE": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 19
+      },
+      "EMAIL": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "f2": 1.0,
+        "tp": 9,
+        "fp": 0,
+        "fn": 0
+      },
+      "FAX": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 4
+      },
+      "ID_ACCESSION": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 18
+      },
+      "ID_ACCOUNT": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 3
+      },
+      "ID_HEALTH_PLAN": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 10
+      },
+      "IP_ADDRESS": {
+        "precision": 1.0,
+        "recall": 0.8333,
+        "f1": 0.9091,
+        "f2": 0.8621,
+        "tp": 5,
+        "fp": 0,
+        "fn": 1
+      },
+      "LICENSE_DEA": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "f2": 1.0,
+        "tp": 4,
+        "fp": 0,
+        "fn": 0
+      },
+      "LICENSE_NPI": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 15
+      },
+      "LICENSE_STATE": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 5
+      },
+      "LOCATION_CITY": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 40
+      },
+      "LOCATION_COUNTY": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 5
+      },
+      "LOCATION_HOSPITAL": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 32
+      },
+      "LOCATION_STREET": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 11
+      },
+      "LOCATION_ZIP": {
+        "precision": 0.7708,
+        "recall": 1.0,
+        "f1": 0.8706,
+        "f2": 0.9439,
+        "tp": 37,
+        "fp": 11,
+        "fn": 0
+      },
+      "MRN": {
+        "precision": 0.7313,
+        "recall": 1.0,
+        "f1": 0.8448,
+        "f2": 0.9316,
+        "tp": 49,
+        "fp": 18,
+        "fn": 0
+      },
+      "NAME_PATIENT": {
+        "precision": 0.3191,
+        "recall": 0.2727,
+        "f1": 0.2941,
+        "f2": 0.2809,
+        "tp": 15,
+        "fp": 32,
+        "fn": 40
+      },
+      "NAME_PROVIDER": {
+        "precision": 0.719,
+        "recall": 0.5918,
+        "f1": 0.6493,
+        "f2": 0.6135,
+        "tp": 87,
+        "fp": 34,
+        "fn": 60
+      },
+      "NAME_RELATIVE": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 30
+      },
+      "PHONE": {
+        "precision": 0.6818,
+        "recall": 1.0,
+        "f1": 0.8108,
+        "f2": 0.9146,
+        "tp": 45,
+        "fp": 21,
+        "fn": 0
+      },
+      "PHOTO": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 1
+      },
+      "SSN": {
+        "precision": 0.625,
+        "recall": 1.0,
+        "f1": 0.7692,
+        "f2": 0.8929,
+        "tp": 5,
+        "fp": 3,
+        "fn": 0
+      },
+      "URL": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "f2": 1.0,
+        "tp": 10,
+        "fp": 0,
+        "fn": 0
+      },
+      "VEHICLE": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 5
+      }
+    }
+  },
+  "presidio": {
+    "name": "Baseline 2 (Presidio/spaCy)",
+    "engine_type": "presidio",
+    "precision": 0.7817047817047817,
+    "recall": 0.5136612021857924,
+    "f1": 0.6199505358615004,
+    "f2": 0.551481372836609,
+    "true_positives": 376,
+    "false_positives": 105,
+    "false_negatives": 356,
+    "leak_rate": 100.0,
+    "utility_score": 1.0,
+    "p50_latency_ms": 1.1776999999710824,
+    "p90_latency_ms": 1.684480000039912,
+    "p95_latency_ms": 1.9305199999053002,
+    "p99_latency_ms": 2.6421020000225335,
+    "mean_latency_ms": 1.2666018181789696,
+    "throughput_notes_per_sec": 789.5141043123791,
+    "throughput_tokens_per_sec": 75635.45119312592,
+    "parameter_count": 14000000,
+    "parameter_count_str": "~14M (spaCy/Presidio)",
+    "per_category": {
+      "AGE": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 7
+      },
+      "BIOMETRIC": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 3
+      },
+      "DATE": {
+        "precision": 0.8864,
+        "recall": 0.9936,
+        "f1": 0.9369,
+        "f2": 0.9701,
+        "tp": 156,
+        "fp": 20,
+        "fn": 1
+      },
+      "DEVICE": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 19
+      },
+      "EMAIL": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "f2": 1.0,
+        "tp": 9,
+        "fp": 0,
+        "fn": 0
+      },
+      "FAX": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 4
+      },
+      "ID_ACCESSION": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 18
+      },
+      "ID_ACCOUNT": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 3
+      },
+      "ID_HEALTH_PLAN": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 10
+      },
+      "IP_ADDRESS": {
+        "precision": 1.0,
+        "recall": 0.8333,
+        "f1": 0.9091,
+        "f2": 0.8621,
+        "tp": 5,
+        "fp": 0,
+        "fn": 1
+      },
+      "LICENSE_DEA": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 4
+      },
+      "LICENSE_NPI": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 15
+      },
+      "LICENSE_STATE": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 5
+      },
+      "LOCATION_CITY": {
+        "precision": 0.8276,
+        "recall": 0.6,
+        "f1": 0.6957,
+        "f2": 0.6349,
+        "tp": 24,
+        "fp": 5,
+        "fn": 16
+      },
+      "LOCATION_COUNTY": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 5
+      },
+      "LOCATION_HOSPITAL": {
+        "precision": 1.0,
+        "recall": 0.8438,
+        "f1": 0.9153,
+        "f2": 0.871,
+        "tp": 27,
+        "fp": 0,
+        "fn": 5
+      },
+      "LOCATION_STATE": {
+        "precision": 0.0,
+        "recall": 1.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 44,
+        "fn": 0
+      },
+      "LOCATION_STREET": {
+        "precision": 1.0,
+        "recall": 0.0909,
+        "f1": 0.1667,
+        "f2": 0.1111,
+        "tp": 1,
+        "fp": 0,
+        "fn": 10
+      },
+      "LOCATION_ZIP": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 37
+      },
+      "MRN": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 49
+      },
+      "NAME_PATIENT": {
+        "precision": 0.3333,
+        "recall": 0.1091,
+        "f1": 0.1644,
+        "f2": 0.1261,
+        "tp": 6,
+        "fp": 12,
+        "fn": 49
+      },
+      "NAME_PROVIDER": {
+        "precision": 1.0,
+        "recall": 0.5646,
+        "f1": 0.7217,
+        "f2": 0.6185,
+        "tp": 83,
+        "fp": 0,
+        "fn": 64
+      },
+      "NAME_RELATIVE": {
+        "precision": 1.0,
+        "recall": 0.1667,
+        "f1": 0.2857,
+        "f2": 0.2,
+        "tp": 5,
+        "fp": 0,
+        "fn": 25
+      },
+      "PHONE": {
+        "precision": 0.6818,
+        "recall": 1.0,
+        "f1": 0.8108,
+        "f2": 0.9146,
+        "tp": 45,
+        "fp": 21,
+        "fn": 0
+      },
+      "PHOTO": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 1
+      },
+      "SSN": {
+        "precision": 0.625,
+        "recall": 1.0,
+        "f1": 0.7692,
+        "f2": 0.8929,
+        "tp": 5,
+        "fp": 3,
+        "fn": 0
+      },
+      "URL": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "f2": 1.0,
+        "tp": 10,
+        "fp": 0,
+        "fn": 0
+      },
+      "VEHICLE": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "f2": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 5
+      }
+    }
+  },
+  "core_gateway": {
+    "name": "Core Gateway Model (<1B)",
+    "engine_type": "core_gateway",
+    "precision": 0.5327510917030568,
+    "recall": 1.0,
+    "f1": 0.6951566951566951,
+    "f2": 0.8507670850767085,
+    "true_positives": 732,
+    "false_positives": 642,
+    "false_negatives": 0,
+    "leak_rate": 0.0,
+    "utility_score": 0.9993096883749958,
+    "p50_latency_ms": 363.44690000009905,
+    "p90_latency_ms": 426.3891000000058,
+    "p95_latency_ms": 445.8300399998506,
+    "p99_latency_ms": 497.7039139999897,
+    "mean_latency_ms": 369.6692236363519,
+    "throughput_notes_per_sec": 2.705121054339412,
+    "throughput_tokens_per_sec": 259.15059700571567,
+    "parameter_count": 124400000,
+    "parameter_count_str": "124.4M (DeBERTa-v3/Ensemble)",
+    "per_category": {
+      "AGE": {
+        "precision": 0.3889,
+        "recall": 1.0,
+        "f1": 0.56,
+        "f2": 0.7609,
+        "tp": 7,
+        "fp": 11,
+        "fn": 0
+      },
+      "BIOMETRIC": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "f2": 1.0,
+        "tp": 3,
+        "fp": 0,
+        "fn": 0
+      },
+      "DATE": {
+        "precision": 0.8626,
+        "recall": 1.0,
+        "f1": 0.9263,
+        "f2": 0.9691,
+        "tp": 157,
+        "fp": 25,
+        "fn": 0
+      },
+      "DEVICE": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "f2": 1.0,
+        "tp": 19,
+        "fp": 0,
+        "fn": 0
+      },
+      "EMAIL": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "f2": 1.0,
+        "tp": 9,
+        "fp": 0,
+        "fn": 0
+      },
+      "FAX": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "f2": 1.0,
+        "tp": 4,
+        "fp": 0,
+        "fn": 0
+      },
+      "ID_ACCESSION": {
+        "precision": 0.7826,
+        "recall": 1.0,
+        "f1": 0.878,
+        "f2": 0.9474,
+        "tp": 18,
+        "fp": 5,
+        "fn": 0
+      },
+      "ID_ACCOUNT": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "f2": 1.0,
+        "tp": 3,
+        "fp": 0,
+        "fn": 0
+      },
+      "ID_HEALTH_PLAN": {
+        "precision": 0.7143,
+        "recall": 1.0,
+        "f1": 0.8333,
+        "f2": 0.9259,
+        "tp": 10,
+        "fp": 4,
+        "fn": 0
+      },
+      "IP_ADDRESS": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "f2": 1.0,
+        "tp": 6,
+        "fp": 0,
+        "fn": 0
+      },
+      "LICENSE_DEA": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "f2": 1.0,
+        "tp": 4,
+        "fp": 0,
+        "fn": 0
+      },
+      "LICENSE_NPI": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "f2": 1.0,
+        "tp": 15,
+        "fp": 0,
+        "fn": 0
+      },
+      "LICENSE_STATE": {
+        "precision": 0.4167,
+        "recall": 1.0,
+        "f1": 0.5882,
+        "f2": 0.7812,
+        "tp": 5,
+        "fp": 7,
+        "fn": 0
+      },
+      "LOCATION_CITY": {
+        "precision": 0.5263,
+        "recall": 1.0,
+        "f1": 0.6897,
+        "f2": 0.8475,
+        "tp": 40,
+        "fp": 36,
+        "fn": 0
+      },
+      "LOCATION_COUNTY": {
+        "precision": 0.8333,
+        "recall": 1.0,
+        "f1": 0.9091,
+        "f2": 0.9615,
+        "tp": 5,
+        "fp": 1,
+        "fn": 0
+      },
+      "LOCATION_HOSPITAL": {
+        "precision": 0.4444,
+        "recall": 1.0,
+        "f1": 0.6154,
+        "f2": 0.8,
+        "tp": 32,
+        "fp": 40,
+        "fn": 0
+      },
+      "LOCATION_STREET": {
+        "precision": 0.2895,
+        "recall": 1.0,
+        "f1": 0.449,
+        "f2": 0.6707,
+        "tp": 11,
+        "fp": 27,
+        "fn": 0
+      },
+      "LOCATION_ZIP": {
+        "precision": 0.2202,
+        "recall": 1.0,
+        "f1": 0.361,
+        "f2": 0.5854,
+        "tp": 37,
+        "fp": 131,
+        "fn": 0
+      },
+      "MRN": {
+        "precision": 0.98,
+        "recall": 1.0,
+        "f1": 0.9899,
+        "f2": 0.9959,
+        "tp": 49,
+        "fp": 1,
+        "fn": 0
+      },
+      "NAME_PATIENT": {
+        "precision": 0.2412,
+        "recall": 1.0,
+        "f1": 0.3887,
+        "f2": 0.6138,
+        "tp": 55,
+        "fp": 173,
+        "fn": 0
+      },
+      "NAME_PROVIDER": {
+        "precision": 0.5307,
+        "recall": 1.0,
+        "f1": 0.6934,
+        "f2": 0.8497,
+        "tp": 147,
+        "fp": 130,
+        "fn": 0
+      },
+      "NAME_RELATIVE": {
+        "precision": 0.3896,
+        "recall": 1.0,
+        "f1": 0.5607,
+        "f2": 0.7614,
+        "tp": 30,
+        "fp": 47,
+        "fn": 0
+      },
+      "PHONE": {
+        "precision": 0.9184,
+        "recall": 1.0,
+        "f1": 0.9574,
+        "f2": 0.9825,
+        "tp": 45,
+        "fp": 4,
+        "fn": 0
+      },
+      "PHOTO": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "f2": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "SSN": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "f2": 1.0,
+        "tp": 5,
+        "fp": 0,
+        "fn": 0
+      },
+      "URL": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "f2": 1.0,
+        "tp": 10,
+        "fp": 0,
+        "fn": 0
+      },
+      "VEHICLE": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "f2": 1.0,
+        "tp": 5,
+        "fp": 0,
+        "fn": 0
+      }
+    }
+  }
+}
