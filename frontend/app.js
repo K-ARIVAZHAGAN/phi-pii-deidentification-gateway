@@ -43,10 +43,18 @@ PLAN: Continue physical therapy 3 times weekly. Follow-up on 05/10/2024.`
 };
 
 const PROMPT_TEMPLATES = {
-  summarize: `Please provide a concise clinical assessment and discharge summary:\n\n{text}`,
-  soap: `Please extract a structured SOAP progress note (Subjective, Objective, Assessment, Plan) from this clinical note:\n\n{text}`,
-  discharge: `Please generate a structured discharge plan including diagnosis, medication instructions, and follow-up timeline:\n\n{text}`,
-  qa: `What is the patient's primary diagnosis, medication dosage, and next scheduled follow-up date based on this record?\n\n{text}`,
+  summarize: `Please provide a structured clinical assessment and discharge summary including patient name, attending doctor, facility, consult date, diagnosis, medication plan, and scheduled follow-up:
+
+{text}`,
+  soap: `Please extract a structured SOAP progress note (Subjective, Objective, Assessment, Plan) with full patient and provider demographics:
+
+{text}`,
+  discharge: `Please generate a structured discharge plan including patient identity, surgeon/attending, diagnosis, medication instructions, and follow-up timeline:
+
+{text}`,
+  qa: `What is the patient's name, primary diagnosis, attending physician, medication dosage, and next scheduled follow-up date based on this record?
+
+{text}`,
   custom: `{text}`
 };
 
