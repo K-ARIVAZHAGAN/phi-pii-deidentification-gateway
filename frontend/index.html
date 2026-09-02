@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PHI/PII De-Identification & Rehydration Gateway — Live Dashboard</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfeff',
+              100: '#cffafe',
+              400: '#22d3ee',
+              500: '#06b6d4',
+              600: '#0891b2',
+              900: '#164e63',
+            },
+            dark: {
+              bg: '#0b0f19',
+              card: '#151d2f',
+              border: '#243048',
+              surface: '#1c263c'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- PDF.js for client-side PDF extraction -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  </script>
+  <!-- Mammoth.js for client-side DOCX extraction -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-950 text-slate-100 flex flex-col min-h-screen">
+
+  <!-- TOP HEADER & STATUS BAR -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <i data-lucide="shield-check" class="w-6 h-6 text-slate-950"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="font-bold text-lg tracking-tight text-white">PHI/PII De-Identification Gateway</span>
+            <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">Sub-1B Model (124.4M)</span>
+          </div>
+          <p class="text-xs text-slate-400">HIPAA Safe Harbor 18-Category Extraction & Response Rehydration</p>
+        </div>
+      </div>
+
+      <!-- Backend Server Status & Controls -->
+      <div class="flex items-center space-x-4">
+        <!-- Live Health Badge -->
+        <div id="backend-status-badge" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-xs">
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-400 live-pulse" id="status-indicator"></span>
+          <span class="text-slate-300 font-medium" id="status-text">Checking Backend (:8000)...</span>
+        </div>
+
+        <button id="btn-theme" onclick="toggleTheme()" class="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white border border-slate-700">
+          <i data-lucide="moon" class="w-4 h-4"></i>
+        </button>
+
+        <a href="http://localhost:8000/docs" target="_blank" class="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 transition">
+          <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+          <span>Swagger API</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- PIPELINE STEP TRACKER BAR -->
+    <div class="glass-panel p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center space-x-3 w-full justify-between max-w-4xl mx-auto text-xs">
+        <div class="flex items-center space-x-2">
+          <div class="step-circle step-completed" id="step-1-circle">1</div>
+          <span class="font-medium text-slate-200">Raw Note</span>
+        </div>
+        <div class="flex-1 h-0.5 bg-slate-700 mx-2"></div>
+        <div class="flex items-center space-x-2">
+          <div class="step-circle step-idle" id="step-2-circle">2</div>
+          <span class="font-medium text-slate-300">De-Identify</span>
+        </div>
+        <div class="flex-1 h-0.5 bg-slate-700 mx-2"></div>
+        <div class="flex items-center space-x-2">
+          <div class="step-circle step-idle" id="step-3-circle">3</div>
+          <span class="font-medium text-slate-300">Foundation LLM</span>
+        </div>
+        <div class="flex-1 h-0.5 bg-slate-700 mx-2"></div>
+        <div class="flex items-center space-x-2">
+          <div class="step-circle step-idle" id="step-4-circle">4</div>
+          <span class="font-medium text-slate-300">Rehydrate</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN TWO-COLUMN WORKSPACE -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- LEFT COLUMN: INPUT & CONTROLS (5 COLS) -->
+      <div class="lg:col-span-5 space-y-6">
+        
+        <!-- Document Input Panel -->
+        <div class="glass-panel p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2 text-slate-100 font-semibold text-sm">
+              <i data-lucide="file-text" class="w-4 h-4 text-cyan-400"></i>
+              <span>1. Ingest Clinical Document</span>
+            </div>
+            <span id="input-stats" class="text-xs text-slate-400">0 words | 0 chars</span>
+          </div>
+
+          <!-- Quick Scenario Selector -->
+          <div class="space-y-1.5">
+            <label class="text-xs font-medium text-slate-400">Load Clinical Test Sample:</label>
+            <div class="grid grid-cols-3 gap-2">
+              <button onclick="loadSample('neurology')" class="px-2.5 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 text-left truncate transition">
+                🧠 Parkinson's (Neuro)
+              </button>
+              <button onclick="loadSample('oncology')" class="px-2.5 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 text-left truncate transition">
+                🔪 Whipple (Surgery)
+              </button>
+              <button onclick="loadSample('geriatric')" class="px-2.5 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 text-left truncate transition">
+                👴 Nonagenarian 94yo
+              </button>
+            </div>
+          </div>
+
+          <!-- Drag & Drop Multi-Format File Upload Zone -->
+          <div id="dropzone" class="border-2 border-dashed border-slate-700 hover:border-cyan-500 rounded-xl p-4 text-center cursor-pointer transition bg-slate-900/40 relative">
+            <input type="file" id="file-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".txt,.docx,.pdf,.json,.md">
+            <div class="flex flex-col items-center justify-center space-y-1">
+              <i data-lucide="upload-cloud" class="w-6 h-6 text-cyan-400"></i>
+              <p class="text-xs font-medium text-slate-200">Drop files or click to upload</p>
+              <p class="text-[11px] text-slate-400">Supports <span class="text-cyan-300 font-mono">.txt, .docx, .pdf, .json, .md</span></p>
+            </div>
+          </div>
+
+          <!-- Text Editor Area -->
+          <div class="space-y-1.5">
+            <textarea id="raw-clinical-text" rows="9" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 font-mono text-xs text-slate-200 focus:outline-none focus:border-cyan-500 transition resize-y" placeholder="Paste or type raw clinical note text here... (contains sensitive patient identifiers)"></textarea>
+          </div>
+
+          <!-- Execution Mode & LLM Adapter Config -->
+          <div class="space-y-3 pt-2 border-t border-slate-800">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">LLM Provider</label>
+                <select id="adapter-provider" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500" onchange="updateModelDefault()">
+                  <option value="gemini" selected>Google Gemini (Live Cloud)</option>
+                  <option value="mock">Offline Mock Adapter (Deterministic)</option>
+                  <option value="openai">OpenAI (gpt-4o)</option>
+                  <option value="anthropic">Anthropic (Claude 3.5)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">Model Name</label>
+                <input type="text" id="model-name" value="gemini-3.6-flash" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-cyan-500">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Task Prompt Template</label>
+              <select id="task-prompt-select" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500" onchange="applyPromptTemplate()">
+                <option value="summarize" selected>Clinical Summary & Assessment</option>
+                <option value="soap">Structured SOAP Progress Note</option>
+                <option value="discharge">Discharge & Medication Regimen</option>
+                <option value="qa">Clinical Q&A Extraction</option>
+                <option value="custom">Custom Template...</option>
+              </select>
+              <textarea id="task-prompt" rows="2" class="w-full mt-2 bg-slate-900 border border-slate-700 rounded-lg p-2 font-mono text-[11px] text-slate-300 focus:outline-none focus:border-cyan-500">Please provide a concise clinical assessment and discharge summary:
+
+{text}</textarea>
+            </div>
+
+            <!-- Advanced Toggles -->
+            <div class="grid grid-cols-2 gap-2 text-xs text-slate-300">
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" id="eponym-toggle" checked class="rounded border-slate-700 text-cyan-500 focus:ring-0 bg-slate-900">
+                <span>Eponym Protection</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" id="date-shift-toggle" checked class="rounded border-slate-700 text-cyan-500 focus:ring-0 bg-slate-900">
+                <span>Date Shift (-42d)</span>
+              </label>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="grid grid-cols-2 gap-3 pt-2">
+              <button id="btn-process" onclick="runGatewayProcess()" class="col-span-2 py-2.5 px-4 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-cyan-500/20 flex items-center justify-center space-x-2 transition active:scale-98">
+                <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+                <span>Execute Full Gateway Loop</span>
+              </button>
+
+              <button onclick="runDeidentifyOnly()" class="py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 flex items-center justify-center space-x-1.5 transition">
+                <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-cyan-400"></i>
+                <span>De-Identify Only</span>
+              </button>
+
+              <button onclick="runRehydrateOnly()" class="py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 flex items-center justify-center space-x-1.5 transition">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span>Rehydrate Only</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: RESULTS & TRANSPARENCY VISUALIZER (7 COLS) -->
+      <div class="lg:col-span-7 space-y-6">
+
+        <!-- Stage Result Tabs Header -->
+        <div class="glass-panel p-2 flex items-center justify-between">
+          <div class="flex items-center space-x-1 overflow-x-auto text-xs">
+            <button onclick="switchTab('full')" id="tab-btn-full" class="tab-btn px-3 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 font-semibold border border-cyan-500/30">
+              ⚡ Side-by-Side
+            </button>
+            <button onclick="switchTab('deid')" id="tab-btn-deid" class="tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200">
+              🔒 Masked Payload
+            </button>
+            <button onclick="switchTab('mapping')" id="tab-btn-mapping" class="tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200">
+              🗺️ Mapping Dict (<span id="mapping-count-badge">0</span>)
+            </button>
+            <button onclick="switchTab('llm')" id="tab-btn-llm" class="tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200">
+              🤖 Raw LLM
+            </button>
+            <button onclick="switchTab('rehydrate')" id="tab-btn-rehydrate" class="tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200">
+              ✨ Rehydrated Final
+            </button>
+          </div>
+
+          <button onclick="copyCurrentOutput()" class="p-1.5 text-slate-400 hover:text-slate-200 bg-slate-800 rounded-md border border-slate-700 text-xs flex items-center space-x-1" title="Copy Output">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+
+        <!-- TAB CONTENT: SIDE-BY-SIDE FULL VIEW -->
+        <div id="tab-full" class="space-y-4">
+
+          <!-- 2-Pane Comparison -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <!-- Masked Sent to LLM Pane -->
+            <div class="glass-panel p-4 space-y-2">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <span class="text-xs font-semibold text-rose-400 flex items-center space-x-1.5">
+                  <i data-lucide="shield" class="w-3.5 h-3.5"></i>
+                  <span>De-Identified Text (Sent to LLM)</span>
+                </span>
+                <span class="text-[10px] bg-rose-500/10 text-rose-300 px-2 py-0.5 rounded border border-rose-500/20">Zero PHI Leaked</span>
+              </div>
+              <div id="full-masked-preview" class="font-mono text-xs text-slate-300 whitespace-pre-wrap max-h-60 overflow-y-auto p-2 bg-slate-900/60 rounded-lg">
+                Click "Execute Full Gateway Loop" or select a sample note.
+              </div>
+            </div>
+
+            <!-- Rehydrated Restored Context Pane -->
+            <div class="glass-panel p-4 space-y-2">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <span class="text-xs font-semibold text-emerald-400 flex items-center space-x-1.5">
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                  <span>Rehydrated Output (Context Restored)</span>
+                </span>
+                <span class="text-[10px] bg-emerald-500/10 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/20">100% Fidelity</span>
+              </div>
+              <div id="full-rehydrated-preview" class="font-mono text-xs text-slate-200 whitespace-pre-wrap max-h-60 overflow-y-auto p-2 bg-slate-900/60 rounded-lg">
+                Awaiting gateway execution...
+              </div>
+            </div>
+          </div>
+
+          <!-- Isolated Session Mapping Mini-Table -->
+          <div class="glass-panel p-4 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+              <span class="text-xs font-semibold text-cyan-400 flex items-center space-x-1.5">
+                <i data-lucide="database" class="w-3.5 h-3.5"></i>
+                <span>Isolated Ephemeral Session Mapping Table</span>
+              </span>
+              <span class="text-[11px] text-slate-400" id="session-map-info">Stateless in-memory dictionary</span>
+            </div>
+            <div class="overflow-x-auto max-h-48 overflow-y-auto">
+              <table class="w-full text-left text-xs font-mono">
+                <thead class="text-[11px] text-slate-400 bg-slate-900/80 sticky top-0">
+                  <tr>
+                    <th class="py-1.5 px-2">Surrogate Token</th>
+                    <th class="py-1.5 px-2">Category</th>
+                    <th class="py-1.5 px-2">Original Clinical PHI (Restored)</th>
+                  </tr>
+                </thead>
+                <tbody id="mapping-table-body" class="divide-y divide-slate-800 text-slate-300">
+                  <tr>
+                    <td colspan="3" class="text-center py-4 text-slate-500">No active session mappings. Run gateway to populate.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Telemetry & Security Audit HUD -->
+          <div class="glass-panel p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+            <div class="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800">
+              <p class="text-[11px] text-slate-400">Zero-Leak Guard</p>
+              <p id="telemetry-leak" class="text-sm font-bold text-emerald-400 mt-0.5">PASSED (0 Leaks)</p>
+            </div>
+            <div class="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800">
+              <p class="text-[11px] text-slate-400">Entities Masked</p>
+              <p id="telemetry-entities" class="text-sm font-bold text-cyan-400 mt-0.5">0</p>
+            </div>
+            <div class="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800">
+              <p class="text-[11px] text-slate-400">De-ID Latency</p>
+              <p id="telemetry-deid-lat" class="text-sm font-bold text-slate-200 mt-0.5">0.0 ms</p>
+            </div>
+            <div class="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800">
+              <p class="text-[11px] text-slate-400">Total Roundtrip</p>
+              <p id="telemetry-total-lat" class="text-sm font-bold text-emerald-400 mt-0.5">0.0 ms</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- TAB CONTENT: MASKED ONLY -->
+        <div id="tab-deid" class="hidden glass-panel p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-300">De-Identified Payload (Delivered to Foundation Model)</span>
+            <button onclick="copyText('deid-view')" class="text-xs text-cyan-400 hover:underline">Copy Text</button>
+          </div>
+          <div id="deid-view" class="font-mono text-xs text-slate-200 whitespace-pre-wrap p-3 bg-slate-900 rounded-xl min-h-[300px]"></div>
+        </div>
+
+        <!-- TAB CONTENT: MAPPING FULL -->
+        <div id="tab-mapping" class="hidden glass-panel p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-300">Complete JSON Mapping Dictionary</span>
+            <button onclick="copyText('mapping-view')" class="text-xs text-cyan-400 hover:underline">Copy JSON</button>
+          </div>
+          <pre id="mapping-view" class="font-mono text-xs text-slate-300 bg-slate-900 p-3 rounded-xl overflow-x-auto min-h-[300px]">{}</pre>
+        </div>
+
+        <!-- TAB CONTENT: LLM RAW -->
+        <div id="tab-llm" class="hidden glass-panel p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-300">Raw Foundation Model Completion (Contains Surrogate Tokens)</span>
+            <button onclick="copyText('llm-view')" class="text-xs text-cyan-400 hover:underline">Copy Text</button>
+          </div>
+          <div id="llm-view" class="font-mono text-xs text-slate-300 whitespace-pre-wrap p-3 bg-slate-900 rounded-xl min-h-[300px]"></div>
+        </div>
+
+        <!-- TAB CONTENT: REHYDRATED FINAL -->
+        <div id="tab-rehydrate" class="hidden glass-panel p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-300">Final Rehydrated Clinical Note (Original Identifiers Restored)</span>
+            <button onclick="copyText('rehydrate-view')" class="text-xs text-emerald-400 hover:underline">Copy Text</button>
+          </div>
+          <div id="rehydrate-view" class="font-mono text-xs text-slate-100 whitespace-pre-wrap p-3 bg-slate-900 rounded-xl min-h-[300px]"></div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-slate-900 bg-slate-950 py-4 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-2">
+      <div>
+        <span>PHI/PII De-Identification Gateway</span> • <span class="text-slate-400">LezDo TechMed Assessment Solution</span>
+      </div>
+      <div class="flex items-center space-x-4">
+        <span>Frontend Port: <strong class="text-cyan-400 font-mono">:3000</strong></span>
+        <span>Backend API: <strong class="text-emerald-400 font-mono">:8000</strong></span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
